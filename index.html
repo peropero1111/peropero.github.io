@@ -263,44 +263,6 @@
                 });
             });
         }
-
-        function addComment(postId, form) {
-            let commentNickname = form.commentNickname.value;
-            let commentContent = form.commentContent.value;
-
-            let newCommentKey = database.ref().child('comments').push().key;
-            database.ref('comments/' + newCommentKey).set({
-                postId: postId,
-                nickname: commentNickname,
-                content: commentContent,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                let postCommentsList = document.querySelector(`.comments[data-post-id="${postId}"]`);
-                let commentHTML = `<li class="comment"><strong>${commentNickname}:</strong> ${commentContent}</li>`;
-                postCommentsList.innerHTML += commentHTML;
-
-                form.commentNickname.value = '';
-                form.commentContent.value = '';
-            });
-
-            return false;
-        }
-
-        function loadComments() {
-            database.ref('comments').orderByChild('timestamp').on('value', (snapshot) => {
-                let commentsData = snapshot.val();
-                let commentsList = document.querySelectorAll('.comments');
-                commentsList.forEach(list => list.innerHTML = '');
-                for (let key in commentsData) {
-                    let comment = commentsData[key];
-                    let postCommentsList = document.querySelector(`.comments[data-post-id="${comment.postId}"]`);
-                    if (postCommentsList) {
-                        let commentHTML = `<li class="comment"><strong>${comment.nickname}:</strong> ${comment.content}</li>`;
-                        postCommentsList.innerHTML += commentHTML;
-                    }
-                }
-            });
-        }
     </script>
 </body>
 </html>
