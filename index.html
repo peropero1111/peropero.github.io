@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kumhounofficialcommunity</title>
+    <style>
+        :root {
+            --background-color: #ffffff;
+            --text-color: #000000;
+            --border-color: #ddd;
+        }
+        [data-theme="dark"] {
+            --background-color: #121212;
+            --text-color: #ffffff;
+            --border-color: #333;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: var(--background-color);
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+        }
+        .warning {
+            font-size: 0.9em;
+            color: #888;
+        }
+        .mode-toggle {
+            margin-bottom: 20px;
+        }
+        .filter-button {
+            margin-bottom: 20px;
+        }
+        .post-content {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .post-content.full {
+            white-space: normal;
+        }
+        .file-preview {
+            display: none;
+        }
+        .post:hover .file-preview, .post:hover .post-content.full {
+            display: block;
+        }
+        .post:hover .post-content.short {
+            display: none;
+        }
+        .btn {
+            margin: 5px;
+        }
+        .comment-form {
+            margin-top: 10px;
+        }
+        .comment {
+            margin-top: 5px;
+            padding: 5px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-database.js"></script>
+    <!-- Firebase Storage -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-storage.js"></script>
+    <script>
+        // Firebase 설정 객체를 여기에 넣으세요
+        var firebaseConfig = {
+            apiKey: "AIzaSyDjh-lraJIkn00uqPkrG_WxNhbvLV15Urw",
+            authDomain: "peropero-d58a1.firebaseapp.com",
+            databaseURL: "https://peropero-d58a1-default-rtdb.firebaseio.com",
+            projectId: "peropero-d58a1",
+            storageBucket: "peropero-d58a1.appspot.com",
+            messagingSenderId: "1:507483833368:web:342ce39bcfb6de1acfaf6d",
+            appId: "YOUR_APP_ID"
+        };
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        var database = firebase.database();
+        var storage = firebase.storage();
+
+        // 모드 전환 함수
+        function toggleMode() {
+            const currentTheme = document.documentElement.getAttribute("data-theme");
+            const newTheme = currentTheme === "dark" ? "light" : "dark";
+            document.documentElement.setAttribute("data-theme", newTheme);
+            localStorage.setItem("theme", newTheme);
+        }
+
+        // 페이지 로드 시 저장된 테마를 적용
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const savedTheme = localStorage.getItem("theme") || "light";
+            document.documentElement.setAttribute("data-theme", savedTheme);
+            loadPosts();
+        });
+    </script>
+</head>
+<body>
+    <h1>kumhounofficialcommunity</h1>
+    <p class="warning">타인의 명예를 훼손하는 글이나 음란물 혹은 욕설은 적지 말아주십시오.</p>
+    <p class="warning">api키를 도용할경우 법적조취를 취하겠습니다.(글쓰시는 건 상관없어요)</p>
+    <button class="mode-toggle" onclick="toggleMode()">모드 전환</button>
+    <button class="filter-button" onclick="filterPosts()">추천수 5개 이상 글 보기</button>
+    <button class="filter-button" onclick="loadPosts()">모든 글 보기</button>
+    <form id="postForm">
+        <label for="nickname">닉네임:</label><br>
+        <input type="text" id="nickname" name="nickname" required><br>
+        <label for="content">내용:</label><br>
+        <textarea id="content" name="content" required></textarea><br>
+        <label for="file">파일 업로드 (PNG, MP3, MP4):</label><br>
+        <input type="file" id="file" name="file" accept=".png, .mp3, .mp4"><br>
+        <button type="submit">글 작성</button>
+    </form>
+    <hr>
+    <h2>작성된 글</h2>
+    <ul id="posts"></ul>
+
+    <script>
+        document.getElementById('postForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let nickname = document.getElementById('nickname').value;
+            let content = document.getElementById('content').value;
+            let file = document.getElementById('file').files[0];
+
+            if (file) {
+                uploadFile(file, nickname, content);
+            } else {
+                savePost(nickname, content, null);
+            }
+
+            document.getElementById('nickname').value = '';
+            document.getElementById('content').value = '';
+            document.getElementById('file').value = '';
+        });
+
+        function uploadFile(file, nickname, content) {
+            let storageRef = storage.ref('uploads/' + file.name);
+            storageRef.put(file).then((snapshot) => {
+                snapshot.ref.getDownloadURL().then((downloadURL) => {
+                    savePost(nickname, content, downloadURL);
+                });
+            });
+        }
+
+        function savePost(nickname, content, fileURL) {
+            let newPostKey = database.ref().child('posts').push().key;
+            database.ref('posts/' + newPostKey).set({
+                nickname: nickname,
+                content: content,
+                fileURL: fileURL,
+                fileName: fileURL ? fileURL.split('/').pop().split('#')[0].split('?')[0] : null,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                likes: 0,
+                dislikes: 0
+            });
+        }
+
+        function loadPosts(filterLikes = null) {
+            database.ref('posts').orderByChild('timestamp').on('value', (snapshot) => {
+                let postsList = document.getElementById('posts');
+                postsList.innerHTML = '';
+                let posts = [];
+                snapshot.forEach((childSnapshot) => {
+                    let post = childSnapshot.val();
+                    if (filterLikes === null || post.likes >= filterLikes) {
+                        let postHTML = `<li class="post" data-id="${childSnapshot.key}"><strong>${post.nickname}:</strong> 
+                            <span class="post-content short">${post.content.substring(0, 20)}${post.content.length > 20 ? '...' : ''}</span>
+                            <span class="post-content full" style="display: none;">${post.content}</span>
+                            <div class="btn"><button onclick="vote('${childSnapshot.key}', 'like')">추천 (${post.likes})</button>
+                            <button onclick="vote('${childSnapshot.key}', 'dislike')">비추천 (${post.dislikes})</button></div>`;
+                        if (post.fileURL) {
+                            postHTML += `<div class="file-preview">`;
+                            if (post.fileName.endsWith('.png')) {
+                                postHTML += `<img src="${post.fileURL}" alt="Image" style="max-width: 100%;">`;
+                            } else if (post.fileName.endsWith('.mp3')) {
+                                postHTML += `<audio controls><source src="${post.fileURL}" type="audio/mpeg">Your browser does not support the audio element.</audio>`;
+                            } else if (post.fileName.endsWith('.mp4')) {
+                                postHTML += `<video controls style="max-width: 100%;"><source src="${post.fileURL}" type="video/mp4">Your browser does not support the video element.</video>`;
+                            }
+                            postHTML += `</div>`;
+                        }
+                        postHTML += `<ul class="comments" data-post-id="${childSnapshot.key}"></ul>
+                                     <form class="comment-form" onsubmit="return addComment('${childSnapshot.key}', this)">
+                                     <input type="text" name="commentNickname" placeholder="닉네임" required>
+                                     <textarea name="commentContent" placeholder="댓글을 입력하세요" required></textarea>
+                                     <button type="submit">댓글 작성</button></form>
+                                     </li>`;
+                        posts.push(postHTML);
+                    }
+                });
+                posts.reverse().forEach((post) => {
+                    postsList.innerHTML += post;
+                });
+                addHoverEffects();
+                loadComments();
+            });
+        }
+
+        function filterPosts() {
+            loadPosts(5);
+        }
+
+        function vote(postId, type) {
+            let voteKey = `vote_${postId}`;
+            if (localStorage.getItem(voteKey)) {
+                alert("이미 이 글에 대해 추천 혹은 비추천하셨습니다.");
+                return;
+            }
+            localStorage.setItem(voteKey, type);
+            let postRef = database.ref('posts/' + postId);
+            postRef.transaction((post) => {
+                if (post) {
+                    if (type === 'like') {
+                        post.likes = (post.likes || 0) + 1;
+                    } else if (type === 'dislike') {
+                        post.dislikes = (post.dislikes || 0) + 1;
+                    }
+                }
+                return post;
+            });
+        }
+
+        function addHoverEffects() {
+            const posts = document.querySelectorAll('.post');
+            posts.forEach(post => {
+                post.addEventListener('mouseenter', () => {
+                    post.querySelector('.post-content.full').style.display = 'block';
+                    post.querySelector('.post-content.short').style.display = 'none';
+                    if (post.querySelector('.file-preview')) {
+                        post.querySelector('.file-preview').style.display = 'block';
+                    }
+                });
+                post.addEventListener('mouseleave', () => {
+                    post.querySelector('.post-content.full').style.display = 'none';
+                    post.querySelector('.post-content.short').style.display = 'block';
+                    if (post.querySelector('.file-preview')) {
+                        post.querySelector('.file-preview').style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        function addComment(postId, form) {
+            let commentNickname = form.commentNickname.value;
+            let commentContent = form.commentContent.value;
+
+            let newCommentKey = database.ref().child('comments').push().key;
+            database.ref('comments/' + newCommentKey).set({
+                postId: postId,
+                nickname: commentNickname,
+                content: commentContent,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                let postCommentsList = document.querySelector(`.comments[data-post-id="${postId}"]`);
+                let commentHTML = `<li class="comment"><strong>${commentNickname}:</strong> ${commentContent}</li>`;
+                postCommentsList.innerHTML += commentHTML;
+
+                form.commentNickname.value = '';
+                form.commentContent.value = '';
+            });
+
+            return false;
+        }
+
+        function loadComments() {
+            database.ref('comments').orderByChild('timestamp').on('value', (snapshot) => {
+                let commentsData = snapshot.val();
+                let commentsList = document.querySelectorAll('.comments');
+                commentsList.forEach(list => list.innerHTML = '');
+                for (let key in commentsData) {
+                    let comment = commentsData[key];
+                    let postCommentsList = document.querySelector(`.comments[data-post-id="${comment.postId}"]`);
+                    if (postCommentsList) {
+                        let commentHTML = `<li class="comment"><strong>${comment.nickname}:</strong> ${comment.content}</li>`;
+                        postCommentsList.innerHTML += commentHTML;
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
