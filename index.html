@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kumho-agora</title>
+    <style>
+                  /* 기본 라이트 모드 설정 */
+                  :root {
+            --background-color: #ffffff;
+            --text-color: #000000;
+            --border-color: #ddd;
+            --container-background: #f9f9f9;
+            --input-background: #ffffff;
+            --input-text-color: #000000;
+            --button-background: #007bff;
+            --button-text-color: #ffffff;
+            --button-border-color: #007bff;
+        }
+
+        /* 다크 모드 설정 */
+        [data-theme="dark"] {
+            --background-color: #121212; /* 다크 모드 배경색 */
+            --text-color: #ffffff; /* 다크 모드 텍스트 색 */
+            --border-color: #333333; /* 다크 모드 경계선 색 */
+            --container-background: #1e1e1e; /* 다크 모드 컨테이너 배경색 */
+            --input-background: #2c2c2c; /* 다크 모드 입력 필드 배경색 */
+            --input-text-color: #ffffff; /* 다크 모드 입력 필드 텍스트 색 */
+            --button-background: #333333; /* 다크 모드 버튼 배경색 */
+            --button-text-color: #ffffff; /* 다크 모드 버튼 텍스트 색 */
+            --button-border-color: #444444; /* 다크 모드 버튼 경계선 색 */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            background-color: var(--background-color); /* 배경색 */
+            color: var(--text-color); /* 텍스트 색 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--container-background); /* 컨테이너 배경색 */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 800px;
+            box-sizing: border-box;
+            overflow-x: auto;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        textarea, input[type="text"], input[type="file"] {
+            width: 100%;
+            font-size: 1em;
+            background-color: var(--input-background); /* 입력 필드 배경색 */
+            color: var(--input-text-color); /* 입력 필드 텍스트 색 */
+            border: 1px solid var(--border-color); /* 경계선 색 */
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background: var(--container-background); /* 리스트 아이템 배경색 */
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid var(--border-color); /* 리스트 아이템 경계선 색 */
+        }
+
+        .warning {
+            font-size: 0.9em;
+            color: var(--text-color); /* 경고 텍스트 색 */
+        }
+
+        .mode-toggle, .filter-button {
+            margin-bottom: 20px;
+            background-color: var(--button-background); /* 버튼 배경색 */
+            color: var(--button-text-color); /* 버튼 텍스트 색 */
+            border: 1px solid var(--button-border-color); /* 버튼 경계선 색 */
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .btn {
+            margin: 5px;
+            padding: 10px;
+            background-color: var(--button-background); /* 버튼 배경색 */
+            color: var(--button-text-color); /* 버튼 텍스트 색 */
+            border: 1px solid var(--button-border-color); /* 버튼 경계선 색 */
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .btn:hover {
+            background-color: #007bff; /* hover 시 배경색 */
+            color: white;
+            border-color: #007bff;
+        }
+
+        .comment-form {
+            margin-top: 10px;
+        }
+
+        .comment {
+            margin-top: 5px;
+            padding: 5px;
+            border: 1px solid var(--border-color);
+            background-color: var(--container-background);
+            color: var(--text-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 10px;
+            }
+
+            h1, h2 {
+                font-size: 1.5em;
+            }
+
+            form, ul {
+                width: 100%;
+            }
+
+            input[type="text"], textarea, input[type="file"] {
+                font-size: 1em;
+            }
+
+            .btn {
+                font-size: 1em;
+            }
+
+            .post-content {
+                max-width: 100%;
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.2em;
+            }
+
+            h2 {
+                font-size: 1em;
+            }
+
+            .post-content, .post-content.full {
+                font-size: 0.9em;
+            }
+
+            input[type="text"], textarea, input[type="file"] {
+                font-size: 0.9em;
+            }
+
+            .btn {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>kumho-agora</h1>
+        <p class="warning">타인의 명예를 훼손하는 글이나 음란물 혹은 욕설은 적지 말아주십시오.</p>
+        <p class="warning">api키를 도용할경우 법적조취를 취하겠습니다.(글쓰시는 건 상관없어요)</p>
+        <p class="warning">댓글을 입력후 사이트를 새로고침 하셔야 정상적으로 댓글이 작성됩니다.</p>
+        <button class="mode-toggle" onclick="toggleMode()">모드 전환</button>
+        <button class="filter-button" onclick="filterPosts()">추천수 5개 이상 글 보기</button>
+        <button class="filter-button" onclick="loadPosts()">모든 글 보기</button>
+        <form id="postForm">
+            <label for="nickname">닉네임:</label>
+            <input type="text" id="nickname" name="nickname" required>
+            <label for="content">내용:</label>
+            <textarea id="content" name="content" required></textarea>
+            <label for="file">파일 업로드 (PNG, MP3, MP4):</label>
+            <input type="file" id="file" name="file" accept=".png, .mp3, .mp4">
+            <button type="submit" class="btn">글 작성</button>
+        </form>
+        <hr>
+        <h2>작성된 글</h2>
+        <ul id="posts"></ul>
+    </div>
+
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-database.js"></script>
+    <!-- Firebase Storage -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-storage.js"></script>
+
+    <script>
+        // Firebase 설정 객체
+        var firebaseConfig = {
+            apiKey: "peropero-d58a1.firebaseapp.com",
+            authDomain: "peropero-d58a1.firebaseapp.com",
+            databaseURL: "https://peropero-d58a1-default-rtdb.firebaseio.com",
+            projectId: "peropero-d58a1",
+            storageBucket: "peropero-d58a1.appspot.com",
+            messagingSenderId: "507483833368",
+            appId: "1:507483833368:web:342ce39bcfb6de1acfaf6d"
+        };
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        var database = firebase.database();
+        var storage = firebase.storage();
+
+        // 모드 전환 함수
+        function toggleMode() {
+            const currentTheme = document.documentElement.getAttribute("data-theme");
+            const newTheme = currentTheme === "dark" ? "light" : "dark";
+            document.documentElement.setAttribute("data-theme", newTheme);
+            localStorage.setItem("theme", newTheme);
+        }
+
+        // 페이지 로드 시 저장된 테마 적용
+        document.addEventListener("DOMContentLoaded", function () {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme) {
+                document.documentElement.setAttribute("data-theme", savedTheme);
+            }
+            loadPosts(); // 페이지 로드 시 기존 게시물 불러오기
+        });
+
+        // 게시물 추가 함수
+        function addPost(nickname, content, fileUrl, fileType) {
+            const newPostRef = database.ref('posts').push();
+            const postData = {
+                nickname: nickname,
+                content: content,
+                fileUrl: fileUrl,
+                fileType: fileType,
+                likes: 0,
+                dislikes: 0
+            };
+            newPostRef.set(postData);
+        }
+
+        // 파일 업로드 및 게시물 저장
+        document.getElementById('postForm').addEventListener('submit', function (e) {
+            e.preventDefault(); // 기본 폼 제출 동작 방지
+            const nickname = document.getElementById('nickname').value;
+            const content = document.getElementById('content').value;
+            const fileInput = document.getElementById('file').files[0];
+
+            if (fileInput) {
+                const storageRef = storage.ref('files/' + fileInput.name);
+                const uploadTask = storageRef.put(fileInput);
+
+                uploadTask.on('state_changed', function(snapshot) {
+                    // 업로드 진행 상태 처리 (생략 가능)
+                }, function(error) {
+                    console.error('파일 업로드 중 오류가 발생했습니다:', error);
+                }, function() {
+                    // 업로드 완료 후 파일 URL 가져오기
+                    uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+                        const fileType = fileInput.type; // 파일 유형 저장
+                        addPost(nickname, content, downloadURL, fileType); // 게시물 저장
+                        displayPost({ nickname: nickname, content: content, fileUrl: downloadURL, fileType: fileType, likes: 0, dislikes: 0 }); // 새 게시물 즉시 추가
+                    });
+                });
+            } else {
+                addPost(nickname, content, null, null); // 파일 없이 게시물 저장
+                displayPost({ nickname: nickname, content: content, fileUrl: null, fileType: null, likes: 0, dislikes: 0 }); // 새 게시물 즉시 추가
+            }
+
+            // 폼 초기화
+            document.getElementById('postForm').reset();
+        });
+
+        // 새 글 DOM에 추가하는 함수
+        function displayPost(postData) {
+            const postList = document.getElementById('posts');
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <strong>${postData.nickname}</strong>: ${postData.content}
+                ${generatePreview(postData.fileUrl, postData.fileType)}
+                <p>추천 수: ${postData.likes} | 비추천 수: ${postData.dislikes}</p>
+                <button onclick="likePost('${postData.id}')">추천</button>
+                <button onclick="dislikePost('${postData.id}')">비추천</button>
+            `;
+            postList.prepend(li); // 가장 최근에 작성된 글이 위에 오도록 prepend 사용
+        }
+
+        // 파일 미리보기 생성 함수
+        function generatePreview(fileUrl, fileType) {
+            if (!fileUrl) return ''; // 파일이 없으면 미리보기를 생성하지 않음
+
+            if (fileType.startsWith('image/')) {
+                // 이미지 파일 (PNG 등)
+                return `<img src="${fileUrl}" alt="이미지 미리보기" style="max-width: 200px; max-height: 200px;">`;
+            } else if (fileType.startsWith('audio/')) {
+                // 오디오 파일 (MP3 등)
+                return `<audio controls src="${fileUrl}"></audio>`;
+            } else if (fileType.startsWith('video/')) {
+                // 비디오 파일 (MP4 등)
+                return `<video controls width="320" height="240">
+                            <source src="${fileUrl}" type="${fileType}">
+                            비디오를 재생할 수 없습니다.
+                        </video>`;
+            } else {
+                return `<a href="${fileUrl}" target="_blank">파일 보기</a>`;
+            }
+        }
+
+        // 모든 게시물 로드 함수
+        function loadPosts() {
+            database.ref('posts').once('value', function(snapshot) {
+                const posts = snapshot.val();
+                const postList = document.getElementById('posts');
+                postList.innerHTML = ''; // 기존 게시물 초기화
+                for (const id in posts) {
+                    const postData = posts[id];
+                    postData.id = id; // 게시물 ID 추가
+                    displayPost(postData); // 게시물 표시
+                }
+            });
+        }
+
+        // 추천수가 비추천수보다 5 이상 많은 글만 필터링해서 보여주기
+        function filterPosts() {
+            database.ref('posts').once('value', function(snapshot) {
+                const posts = snapshot.val();
+                const postList = document.getElementById('posts');
+                postList.innerHTML = ''; // 기존 게시물 초기화
+
+                for (const id in posts) {
+                    const postData = posts[id];
+                    const netLikes = (postData.likes || 0) - (postData.dislikes || 0); // 추천수 - 비추천수 계산
+
+                    if (netLikes >= 5) { // 추천수 - 비추천수가 5 이상인 게시물만 표시
+                        postData.id = id; // 게시물 ID 추가
+                        displayPost(postData); // 게시물 표시
+                    }
+                }
+            });
+        }
+
+        // 추천 기능
+        function likePost(postId) {
+            const voteKey = `vote_${postId}_like`;
+            if (localStorage.getItem(voteKey)) {
+                alert("이미 이 글에 추천을 하셨습니다.");
+                return;
+            }
+
+            const postRef = database.ref('posts/' + postId);
+            postRef.child('likes').transaction(function(likes) {
+                return (likes || 0) + 1;
+            }, function(error, committed, snapshot) {
+                if (committed) {
+                    localStorage.setItem(voteKey, true); // 추천 완료 후 로컬 스토리지에 저장
+                    loadPosts(); // 추천이 반영된 후 전체 게시물 다시 로드
+                }
+            });
+        }
+
+        // 비추천 기능
+        function dislikePost(postId) {
+            const voteKey = `vote_${postId}_dislike`;
+            if (localStorage.getItem(voteKey)) {
+                alert("이미 이 글에 비추천을 하셨습니다.");
+                return;
+            }
+
+            const postRef = database.ref('posts/' + postId);
+            postRef.child('dislikes').transaction(function(dislikes) {
+                return (dislikes || 0) + 1;
+            }, function(error, committed, snapshot) {
+                if (committed) {
+                    localStorage.setItem(voteKey, true); // 비추천 완료 후 로컬 스토리지에 저장
+                    loadPosts(); // 비추천이 반영된 후 전체 게시물 다시 로드
+                }
+            });
+        }
+    </script>
+</body>
+</html>
