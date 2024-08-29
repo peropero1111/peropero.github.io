@@ -300,26 +300,27 @@
             postList.prepend(li); // 가장 최근에 작성된 글이 위에 오도록 prepend 사용
         }
 
-        // 파일 미리보기 생성 함수
-        function generatePreview(fileUrl, fileType) {
-            if (!fileUrl) return ''; // 파일이 없으면 미리보기를 생성하지 않음
+    // 파일 미리보기 생성 함수
+function generatePreview(fileUrl, fileType) {
+    if (!fileUrl) return ''; // 파일이 없으면 미리보기를 생성하지 않음
 
-            if (fileType.startsWith('image/')) {
-                // 이미지 파일 (PNG 등)
-                return `<img src="${fileUrl}" alt="이미지 미리보기" style="max-width: 200px; max-height: 200px;">`;
-            } else if (fileType.startsWith('audio/')) {
-                // 오디오 파일 (MP3 등)
-                return `<audio controls src="${fileUrl}"></audio>`;
-            } else if (fileType.startsWith('video/')) {
-                // 비디오 파일 (MP4 등)
-                return `<video controls width="320" height="240">
-                            <source src="${fileUrl}" type="${fileType}">
-                            비디오를 재생할 수 없습니다.
-                        </video>`;
-            } else {
-                return `<a href="${fileUrl}" target="_blank">파일 보기</a>`;
-            }
-        }
+    if (fileType.startsWith('image/')) {
+        // 이미지 파일 (PNG 등)
+        return `<img src="${fileUrl}" alt="이미지 미리보기" style="max-width: 200px; max-height: 200px;">`;
+    } else if (fileType.startsWith('audio/')) {
+        // 오디오 파일 (MP3 등)
+        return `<audio controls src="${fileUrl}"></audio>`;
+    } else if (fileType.startsWith('video/')) {
+        // 비디오 파일 (MP4 등)
+        return `<video controls style="max-width: 320px; max-height: 240px;">
+                    <source src="${fileUrl}" type="${fileType}">
+                    비디오를 재생할 수 없습니다.
+                </video>`;
+    } else {
+        return `<a href="${fileUrl}" target="_blank">파일 보기</a>`;
+    }
+}
+
 
         // 모든 게시물 로드 함수
         function loadPosts() {
