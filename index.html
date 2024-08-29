@@ -313,15 +313,10 @@ function generatePreview(fileUrl, fileType) {
     } else if (fileType.startsWith('video/')) {
         // 비디오 파일 (MP4 등)
         return `<video controls style="max-width: 320px; max-height: 240px;">
-                    <source src="${fileUrl}" type="${fileType}">
-                    비디오를 재생할 수 없습니다.
-                </video>`;
-    } else {
-        return `<a href="${fileUrl}" target="_blank">파일 보기</a>`;
-    }
+                    <source src="${fileUrl}" type="${fileType}"></video>`;
+        await sleep(3);
 }
-
-
+    
         // 모든 게시물 로드 함수
         function loadPosts() {
             database.ref('posts').once('value', function(snapshot) {
