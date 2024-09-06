@@ -182,7 +182,8 @@
         <h1>kumho-agora</h1>
         <p class="warning">타인의 명예를 훼손하는 글이나 음란물 혹은 욕설은 적지 말아주십시오.</p>
         <p class="warning">api키를 도용할경우 법적조취를 취하겠습니다.(글쓰시는 건 상관없어요)</p>
-        <p class="warning">댓글을 입력후 사이트를 새로고침 하셔야 정상적으로 댓글이 작성됩니다.</p>
+        <p class="warning">자료의 이름은 영어로 되어 있고 띄어쓰기가 없어야 정상적으로 글이 작성됩니다.</p>
+        <p class="warning">자료를 첨부할경우 해당자료에 대한 모든 법적인 책임은 올린 당사자에게 귀속됩니다.</p>
         <button class="mode-toggle" onclick="toggleMode()">모드 전환</button>
         <button class="filter-button" onclick="filterPosts()">추천수 5개 이상 글 보기</button>
         <button class="filter-button" onclick="loadPosts()">모든 글 보기</button>
@@ -191,7 +192,7 @@
             <input type="text" id="nickname" name="nickname" required>
             <label for="content">내용:</label>
             <textarea id="content" name="content" required></textarea>
-            <label for="file">파일 업로드 (PNG, MP3, MP4):</label>
+            <label for="file">파일 업로드 (PNG, JPG, MP3, MP4):</label>
             <input type="file" id="file" name="file" accept=".png, .mp3, .mp4">
             <button type="submit" class="btn">글 작성</button>
         </form>
