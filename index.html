@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>kumho-agora</title>
     <style>
-                  /* 기본 라이트 모드 설정 */
-                  :root {
+        /* 기본 라이트 모드 설정 */
+        :root {
             --background-color: #ffffff;
             --text-color: #000000;
             --border-color: #ddd;
@@ -114,66 +114,20 @@
             border-color: #007bff;
         }
 
-        .comment-form {
+        .comment {
+            margin-top: 5px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            background-color: var(--container-background);
+        }
+
+        form {
             margin-top: 10px;
         }
 
-        .comment {
-            margin-top: 5px;
-            padding: 5px;
-            border: 1px solid var(--border-color);
-            background-color: var(--container-background);
-            color: var(--text-color);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                width: 100%;
-                padding: 10px;
-            }
-
-            h1, h2 {
-                font-size: 1.5em;
-            }
-
-            form, ul {
-                width: 100%;
-            }
-
-            input[type="text"], textarea, input[type="file"] {
-                font-size: 1em;
-            }
-
-            .btn {
-                font-size: 1em;
-            }
-
-            .post-content {
-                max-width: 100%;
-                font-size: 1em;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.2em;
-            }
-
-            h2 {
-                font-size: 1em;
-            }
-
-            .post-content, .post-content.full {
-                font-size: 0.9em;
-            }
-
-            input[type="text"], textarea, input[type="file"] {
-                font-size: 0.9em;
-            }
-
-            .btn {
-                font-size: 0.9em;
-            }
+        input[type="text"] {
+            margin-bottom: 5px;
+            padding: 10px;
         }
     </style>
 </head>
@@ -257,38 +211,55 @@
         }
 
         // 파일 업로드 및 게시물 저장
-        document.getElementById('postForm').addEventListener('submit', function (e) {
-            e.preventDefault(); // 기본 폼 제출 동작 방지
+        document.getElementById('postForm').addEventListener('submit', function (event) {
+            event.preventDefault();
             const nickname = document.getElementById('nickname').value;
             const content = document.getElementById('content').value;
-            const fileInput = document.getElementById('file').files[0];
+            const file = document.getElementById('file').files[0];
 
-            if (fileInput) {
-                const storageRef = storage.ref('files/' + fileInput.name);
-                const uploadTask = storageRef.put(fileInput);
-
-                uploadTask.on('state_changed', function(snapshot) {
-                    // 업로드 진행 상태 처리 (생략 가능)
-                }, function(error) {
-                    console.error('파일 업로드 중 오류가 발생했습니다:', error);
-                }, function() {
-                    // 업로드 완료 후 파일 URL 가져오기
-                    uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
-                        const fileType = fileInput.type; // 파일 유형 저장
-                        addPost(nickname, content, downloadURL, fileType); // 게시물 저장
-                        displayPost({ nickname: nickname, content: content, fileUrl: downloadURL, fileType: fileType, likes: 0, dislikes: 0 }); // 새 게시물 즉시 추가
+            if (file) {
+                const storageRef = storage.ref('uploads/' + file.name);
+                storageRef.put(file).then(function (snapshot) {
+                    snapshot.ref.getDownloadURL().then(function (downloadURL) {
+                        addPost(nickname, content, downloadURL, file.type);
+                        document.getElementById('postForm').reset();
                     });
                 });
             } else {
-                addPost(nickname, content, null, null); // 파일 없이 게시물 저장
-                displayPost({ nickname: nickname, content: content, fileUrl: null, fileType: null, likes: 0, dislikes: 0 }); // 새 게시물 즉시 추가
+                addPost(nickname, content, null, null);
+                document.getElementById('postForm').reset();
             }
-
-            // 폼 초기화
-            document.getElementById('postForm').reset();
         });
 
-        // 새 글 DOM에 추가하는 함수
+        // 게시물 불러오기 함수
+        function loadPosts() {
+            const postsRef = database.ref('posts');
+            postsRef.on('value', function (snapshot) {
+                const postsList = document.getElementById('posts');
+                postsList.innerHTML = '';
+                snapshot.forEach(function (childSnapshot) {
+                    const postData = childSnapshot.val();
+                    postData.id = childSnapshot.key;
+                    displayPost(postData);
+                });
+            });
+        }
+
+        // 게시물 필터링 함수
+        function filterPosts() {
+            const postsRef = database.ref('posts').orderByChild('likes').startAt(5);
+            postsRef.once('value', function (snapshot) {
+                const postsList = document.getElementById('posts');
+                postsList.innerHTML = '';
+                snapshot.forEach(function (childSnapshot) {
+                    const postData = childSnapshot.val();
+                    postData.id = childSnapshot.key;
+                    displayPost(postData);
+                });
+            });
+        }
+
+        // 게시물 DOM에 표시하는 함수
         function displayPost(postData) {
             const postList = document.getElementById('posts');
             const li = document.createElement('li');
@@ -298,100 +269,79 @@
                 <p>추천 수: ${postData.likes} | 비추천 수: ${postData.dislikes}</p>
                 <button onclick="likePost('${postData.id}')">추천</button>
                 <button onclick="dislikePost('${postData.id}')">비추천</button>
+                <h4>댓글</h4>
+                <ul id="comments-${postData.id}"></ul>
+                <form onsubmit="addComment('${postData.id}', this); return false;">
+                    <input type="text" name="commentNickname" placeholder="닉네임" required>
+                    <input type="text" name="commentContent" placeholder="댓글 입력" required>
+                    <button type="submit">댓글 작성</button>
+                </form>
             `;
-            postList.prepend(li); // 가장 최근에 작성된 글이 위에 오도록 prepend 사용
+            postList.prepend(li);
+            loadComments(postData.id);
         }
 
-// 파일 미리보기 생성 함수
-function generatePreview(fileUrl, fileType) {
-    if (!fileUrl) return ''; // 파일이 없으면 미리보기를 생성하지 않음
+        // 댓글 저장 함수
+        function addComment(postId, form) {
+            const commentNickname = form.commentNickname.value;
+            const commentContent = form.commentContent.value;
 
-    if (fileType.startsWith('image/')) {
-        // 이미지 파일 (PNG 등)
-        return `<img src="${fileUrl}" alt="이미지 미리보기" style="max-width: 200px; max-height: 200px;">`;
-    } else if (fileType.startsWith('audio/')) {
-        // 오디오 파일 (MP3 등)
-        return `<audio controls src="${fileUrl}"></audio>`;
-    } else if (fileType.startsWith('video/')) {
-        // 비디오 파일 (MP4 등)
-        return `<video controls style="max-width: 320px; max-height: 240px;">
-                    <source src="${fileUrl}" type="${fileType}">
-                    비디오를 재생할 수 없습니다.
-                </video>`;
-    } else {
-        return `<a href="${fileUrl}" target="_blank">파일 보기</a>`;
-    }
-}
+            if (commentNickname && commentContent) {
+                const newCommentKey = database.ref().child(`posts/${postId}/comments`).push().key;
+                database.ref(`posts/${postId}/comments/${newCommentKey}`).set({
+                    nickname: commentNickname,
+                    content: commentContent,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
 
-    
-        // 모든 게시물 로드 함수
-        function loadPosts() {
-            database.ref('posts').once('value', function(snapshot) {
-                const posts = snapshot.val();
-                const postList = document.getElementById('posts');
-                postList.innerHTML = ''; // 기존 게시물 초기화
-                for (const id in posts) {
-                    const postData = posts[id];
-                    postData.id = id; // 게시물 ID 추가
-                    displayPost(postData); // 게시물 표시
-                }
+                form.commentNickname.value = '';
+                form.commentContent.value = '';
+            }
+            return false;
+        }
+
+        // 댓글 불러오기 함수
+        function loadComments(postId) {
+            const commentsRef = database.ref(`posts/${postId}/comments`);
+            commentsRef.on('value', function (snapshot) {
+                const commentsList = document.getElementById(`comments-${postId}`);
+                commentsList.innerHTML = '';
+
+                snapshot.forEach(function (childSnapshot) {
+                    const comment = childSnapshot.val();
+                    const li = document.createElement('li');
+                    li.classList.add('comment');
+                    li.innerHTML = `<strong>${comment.nickname}:</strong> ${comment.content}`;
+                    commentsList.appendChild(li);
+                });
             });
         }
 
-        // 추천수가 비추천수보다 5 이상 많은 글만 필터링해서 보여주기
-        function filterPosts() {
-            database.ref('posts').once('value', function(snapshot) {
-                const posts = snapshot.val();
-                const postList = document.getElementById('posts');
-                postList.innerHTML = ''; // 기존 게시물 초기화
-
-                for (const id in posts) {
-                    const postData = posts[id];
-                    const netLikes = (postData.likes || 0) - (postData.dislikes || 0); // 추천수 - 비추천수 계산
-
-                    if (netLikes >= 5) { // 추천수 - 비추천수가 5 이상인 게시물만 표시
-                        postData.id = id; // 게시물 ID 추가
-                        displayPost(postData); // 게시물 표시
-                    }
-                }
-            });
+        // 미디어 미리보기 생성 함수
+        function generatePreview(fileUrl, fileType) {
+            if (!fileUrl) return '';
+            if (fileType.startsWith('image/')) {
+                return `<img src="${fileUrl}" style="max-width: 100%; height: auto;" alt="Image Preview">`;
+            } else if (fileType.startsWith('audio/')) {
+                return `<audio controls><source src="${fileUrl}" type="${fileType}">Your browser does not support the audio element.</audio>`;
+            } else if (fileType.startsWith('video/')) {
+                return `<video controls style="max-width: 100%; height: auto;"><source src="${fileUrl}" type="${fileType}">Your browser does not support the video element.</video>`;
+            }
+            return '';
         }
 
-        // 추천 기능
+        // 추천 및 비추천 함수
         function likePost(postId) {
-            const voteKey = `vote_${postId}_like`;
-            if (localStorage.getItem(voteKey)) {
-                alert("이미 이 글에 추천을 하셨습니다.");
-                return;
-            }
-
-            const postRef = database.ref('posts/' + postId);
-            postRef.child('likes').transaction(function(likes) {
+            const postRef = database.ref('posts/' + postId + '/likes');
+            postRef.transaction(function (likes) {
                 return (likes || 0) + 1;
-            }, function(error, committed, snapshot) {
-                if (committed) {
-                    localStorage.setItem(voteKey, true); // 추천 완료 후 로컬 스토리지에 저장
-                    loadPosts(); // 추천이 반영된 후 전체 게시물 다시 로드
-                }
             });
         }
 
-        // 비추천 기능
         function dislikePost(postId) {
-            const voteKey = `vote_${postId}_dislike`;
-            if (localStorage.getItem(voteKey)) {
-                alert("이미 이 글에 비추천을 하셨습니다.");
-                return;
-            }
-
-            const postRef = database.ref('posts/' + postId);
-            postRef.child('dislikes').transaction(function(dislikes) {
+            const postRef = database.ref('posts/' + postId + '/dislikes');
+            postRef.transaction(function (dislikes) {
                 return (dislikes || 0) + 1;
-            }, function(error, committed, snapshot) {
-                if (committed) {
-                    localStorage.setItem(voteKey, true); // 비추천 완료 후 로컬 스토리지에 저장
-                    loadPosts(); // 비추천이 반영된 후 전체 게시물 다시 로드
-                }
             });
         }
     </script>
