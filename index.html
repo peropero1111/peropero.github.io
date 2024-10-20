@@ -198,19 +198,18 @@
 
         // 게시물 추가 함수
         function addPost(nickname, content, fileUrl, fileType) {
-            const newPostRef = database.ref('posts').push();
-            const postData = {
+            const newPostKey = database.ref().child('posts').push().key;
+            database.ref('posts/' + newPostKey).set({
                 nickname: nickname,
                 content: content,
-                fileUrl: fileUrl,
-                fileType: fileType,
+                fileUrl: fileUrl || null,
+                fileType: fileType || null,
                 likes: 0,
                 dislikes: 0
-            };
-            newPostRef.set(postData);
+            });
         }
 
-        // 파일 업로드 및 게시물 저장
+        // 게시물 작성 폼 제출 이벤트 리스너
         document.getElementById('postForm').addEventListener('submit', function (event) {
             event.preventDefault();
             const nickname = document.getElementById('nickname').value;
@@ -267,8 +266,8 @@
                 <strong>${postData.nickname}</strong>: ${postData.content}
                 ${generatePreview(postData.fileUrl, postData.fileType)}
                 <p>추천 수: ${postData.likes} | 비추천 수: ${postData.dislikes}</p>
-                <button onclick="likePost('${postData.id}')">추천</button>
-                <button onclick="dislikePost('${postData.id}')">비추천</button>
+                <button onclick="likePost('${postData.id}', '${postData.nickname}')">추천</button>
+                <button onclick="dislikePost('${postData.id}', '${postData.nickname}')">비추천</button>
                 <h4>댓글</h4>
                 <ul id="comments-${postData.id}"></ul>
                 <form onsubmit="addComment('${postData.id}', this); return false;">
@@ -330,18 +329,34 @@
             return '';
         }
 
-        // 추천 및 비추천 함수
-        function likePost(postId) {
-            const postRef = database.ref('posts/' + postId + '/likes');
-            postRef.transaction(function (likes) {
-                return (likes || 0) + 1;
+        // 추천 및 비추천 함수 (한 번만 누를 수 있게 구현)
+        function likePost(postId, nickname) {
+            const postRef = database.ref('posts/' + postId + '/likedUsers/' + nickname);
+            postRef.once('value', function (snapshot) {
+                if (!snapshot.exists()) {
+                    // 사용자가 이미 추천하지 않은 경우 추천 가능
+                    database.ref('posts/' + postId + '/likes').transaction(function (likes) {
+                        return (likes || 0) + 1;
+                    });
+                    postRef.set(true); // 사용자가 추천한 것으로 저장
+                } else {
+                    alert('이미 추천을 했습니다.');
+                }
             });
         }
 
-        function dislikePost(postId) {
-            const postRef = database.ref('posts/' + postId + '/dislikes');
-            postRef.transaction(function (dislikes) {
-                return (dislikes || 0) + 1;
+        function dislikePost(postId, nickname) {
+            const postRef = database.ref('posts/' + postId + '/dislikedUsers/' + nickname);
+            postRef.once('value', function (snapshot) {
+                if (!snapshot.exists()) {
+                    // 사용자가 이미 비추천하지 않은 경우 비추천 가능
+                    database.ref('posts/' + postId + '/dislikes').transaction(function (dislikes) {
+                        return (dislikes || 0) + 1;
+                    });
+                    postRef.set(true); // 사용자가 비추천한 것으로 저장
+                } else {
+                    alert('이미 비추천을 했습니다.');
+                }
             });
         }
     </script>
